@@ -2,22 +2,18 @@
 // camel-k: dependency=camel:jacksonxml 
 // camel-k: dependency=camel:http 
 // camel-k: dependency=camel:gson
-// camel-k: dependency=camel:jdbc 
-// camel-k: dependency=camel:csv 
-// camel-k: dependency=mvn:org.postgresql:postgresql:jar:42.2.13 
-// camel-k: dependency=mvn:org.apache.commons:commons-dbcp2:jar:2.7.0
+// camel-k: dependency=camel:csv
+// camel-k: dependency=mvn:javax.servlet:servlet-api:jar:2.5
+// camel-k: dependency=mvn:commons-logging:commons-logging:jar:1.2
 
-import java.util.ArrayList;
+
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.apache.camel.AggregationStrategy;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.dataformat.JsonLibrary;
-import org.apache.camel.processor.aggregate.AbstractListAggregationStrategy;
 
 public class DataProducer extends RouteBuilder {
 
@@ -26,106 +22,18 @@ public class DataProducer extends RouteBuilder {
 
     // The following processors store relevant info as properties
     Processor processCsv = new CSVProcessor();
-    Processor processXML = new XMLProcessor();
-
-    // Preparing properties to build a GeoJSON Feature
-    Processor processDB = new DBProcessor();
-
-    // Just collects all features in a collection for the final GeoJSON
-    Processor buildGeoJSON = new GeoJSONProcessor();
-
-    // Aggregate all messages into one message with the list of bodies
-    AggregationStrategy aggregationStrategy = new CollectToListStrategy();
 
     // This is the actual route
     from("timer:java?period=100000")
 
         // We start by reading our data.csv file, looping on each row
         .to("{{source.csv}}").unmarshal("customCSV").split(body()).streaming()
-        // we store on exchange properties all the data we are interested in
-        .process(processCsv)
-        .marshal().json(JsonLibrary.Gson)
+        // we store on exchange body all the data we are interested in
+        .process(processCsv).marshal().json(JsonLibrary.Gson)
         .log("${body}")
         .to("kafka:sales-data?brokers={{kafka.bootstrap.address}}")
-       
-
-        // now we query the postgres database for more data
-        //.setBody().simple("SELECT info FROM descriptions WHERE id like '${exchangeProperty.pollutant}'")
-        //.to("jdbc:postgresBean?readSize=1")
-
-        // we store on exchange properties all the data we are interested in
-        //.process(processDB)
-
-        // we collect all rows into one message
-        //.aggregate(constant(true), aggregationStrategy).completionSize(5).process(buildGeoJSON).marshal()
-        //.json(JsonLibrary.Gson)
-
-        //.to("log:info?showBody=true")
-        // and finally store the result on the postgres database
-        //.setBody(simple("INSERT INTO measurements (geojson) VALUES ('${body}')")).to("jdbc:postgresBean")
-
         // Write some log to know it finishes properly
         .log("Information stored");
-  }
-
-  private final class CollectToListStrategy extends AbstractListAggregationStrategy<Object> {
-    @Override
-    public Object getValue(Exchange exchange) {
-      return exchange.getMessage().getBody();
-    }
-  }
-
-  private final class GeoJSONProcessor implements Processor {
-    @Override
-    public void process(Exchange exchange) throws Exception {
-      Map<String, Object> res = new HashMap<String, Object>();
-      res.put("features", exchange.getMessage().getBody());
-      res.put("type", "FeatureCollection");
-      exchange.getIn().setBody(res);
-    }
-  }
-
-  private final class DBProcessor implements Processor {
-    @Override
-    public void process(Exchange exchange) throws Exception {
-      @SuppressWarnings("unchecked")
-      List<Object> body = exchange.getMessage().getBody(List.class);
-
-      Map<String, Object> outputBody = new HashMap<String, Object>();
-      outputBody.put("unit", exchange.getProperty("unit"));
-      outputBody.put("level", exchange.getProperty("level"));
-      outputBody.put("pollutant", exchange.getProperty("pollutant"));
-      outputBody.put("address", exchange.getProperty("address"));
-
-      // If we got any response from the DB, add it
-      if (body.size() > 0) {
-        outputBody.put("info", body.get(0).toString());
-      }
-
-      List<String> coordinates = new ArrayList<String>();
-      coordinates.add(exchange.getProperty("lat", "").toString());
-      coordinates.add(exchange.getProperty("lon", "").toString());
-
-      Map<String, Object> geometry = new HashMap<String, Object>();
-      geometry.put("type", "Point");
-      geometry.put("coordinates", coordinates);
-
-      Map<String, Object> res = new HashMap<String, Object>();
-      res.put("geometry", geometry);
-      res.put("properties", outputBody);
-      res.put("type", "Feature");
-
-      exchange.getIn().setBody(res);
-    }
-  }
-
-  private final class XMLProcessor implements Processor {
-    @Override
-    public void process(Exchange exchange) throws Exception {
-      @SuppressWarnings("unchecked")
-      Map<String, String> body = exchange.getIn().getBody(Map.class);
-      exchange.setProperty("address", body.get("addressparts"));
-    }
   }
 
   private final class CSVProcessor implements Processor {
@@ -133,21 +41,27 @@ public class DataProducer extends RouteBuilder {
     public void process(Exchange exchange) throws Exception {
       @SuppressWarnings("unchecked")
       Map<String, String> body = exchange.getIn().getBody(Map.class);
+      Map<String, String> res = new HashMap<String, String>();
+
 
       if (body != null) {
-        extractValue(exchange, body, "ORDERNUMBER", "orderNumber");
-        extractValue(exchange, body, "ORDERDATE", "orderDate");
-        extractValue(exchange, body, "STATUS", "status");
-        extractValue(exchange, body, "CUSTOMERNAME", "customerName");
-        extractValue(exchange, body, "DEALSIZE", "dealSize");
-        extractValue(exchange, body, "SALES", "amount");
+
+        res.put("orderNumber", extractValue(exchange, body, "ORDERNUMBER"));
+        res.put("orderDate", extractValue(exchange, body, "ORDERDATE"));
+        res.put("status", extractValue(exchange, body, "STATUS"));
+        res.put("customerName", extractValue(exchange, body, "CUSTOMERNAME"));
+        res.put("dealSize", extractValue(exchange, body, "DEALSIZE"));
+        res.put("amount", extractValue(exchange, body, "SALES"));
+
+        exchange.getIn().setBody(res);
       }
     }
 
-    private void extractValue(Exchange exchange, Map<String, String> body, String param, String keyName) {
+    private String extractValue(Exchange exchange, Map<String, String> body, String param) {
       if (body.containsKey(param)) {
-        exchange.setProperty(keyName, body.get(param));
+        return (String) body.get(param);
       }
+      return null;
     }
   }
 }
