@@ -1,6 +1,5 @@
-// camel-k: language=java property-file=application.properties 
-// camel-k: dependency=camel:jacksonxml 
-// camel-k: dependency=camel:http 
+// camel-k: language=java property-file=producer.properties
+// camel-k: dependency=camel:http
 // camel-k: dependency=camel:gson
 // camel-k: dependency=camel:csv
 // camel-k: dependency=mvn:javax.servlet:servlet-api:jar:2.5

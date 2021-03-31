@@ -1,4 +1,4 @@
-// camel-k: language=java property-file=application.properties
+// camel-k: language=java property-file=consumer.properties
 // camel-k: dependency=camel:gson
 
 import org.apache.camel.builder.RouteBuilder;
