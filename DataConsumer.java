@@ -32,10 +32,10 @@ public class DataConsumer extends RouteBuilder {
         public void process(Exchange exchange) throws Exception {
             @SuppressWarnings("unchecked")
             Map<String, String> body = exchange.getIn().getBody(Map.class);
-            String query = "INSERT INTO sales(ORDERNUMBER,ORDERDATE,STATUS,CUSTOMERNAME,DEALSIZE,AMOUNT)" + 
+            String query = "INSERT INTO sales(ORDERNUMBER,ORDERDATE,STATUS,CUSTOMERNAME,DEALSIZE,AMOUNT,PRODUCTLINE)" + 
                   "values('" + body.get("orderNumber") + "'" + ",'" + body.get("orderDate") + "'" +
                   ",'" + body.get("status") + "'" + ",'" + body.get("customerName") + "'" + 
-                  ",'" + body.get("dealSize") + "'" + ",'" + String.valueOf(body.get("amount")) + "')";
+                  ",'" + body.get("dealSize") + "'" + ",'" + String.valueOf(body.get("amount")) + "'" + ",'" + body.get("productline") + "')";
             
             exchange.getIn().setBody(query);
          }

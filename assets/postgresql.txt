@@ -1,3 +1,3 @@
 psql -U sales sales \
 -c "CREATE TABLE sales (ORDERNUMBER varchar(30), ORDERDATE date, 
-STATUS varchar(30), CUSTOMERNAME varchar(30), DEALSIZE varchar(30), AMOUNT double precision);"
+STATUS varchar(30), CUSTOMERNAME varchar(30), DEALSIZE varchar(30), AMOUNT double precision, PRODUCTLINE varchar(30));"

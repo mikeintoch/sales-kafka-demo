@@ -53,6 +53,7 @@ public class DataProducer extends RouteBuilder {
         res.put("customerName", extractValue(exchange, body, "CUSTOMERNAME"));
         res.put("dealSize", extractValue(exchange, body, "DEALSIZE"));
         res.put("amount", Double.parseDouble(extractValue(exchange, body, "SALES")));
+        res.put("productline", extractValue(exchange,body, "PRODUCTLINE"));
 
         exchange.getIn().setBody(res);
       }
