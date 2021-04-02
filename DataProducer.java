@@ -14,6 +14,8 @@ import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.dataformat.JsonLibrary;
 
+import java.text.SimpleDateFormat;
+
 public class DataProducer extends RouteBuilder {
 
   @Override
@@ -40,17 +42,17 @@ public class DataProducer extends RouteBuilder {
     public void process(Exchange exchange) throws Exception {
       @SuppressWarnings("unchecked")
       Map<String, String> body = exchange.getIn().getBody(Map.class);
-      Map<String, String> res = new HashMap<String, String>();
+      Map<String, Object> res = new HashMap<String, Object>();
 
 
       if (body != null) {
 
         res.put("orderNumber", extractValue(exchange, body, "ORDERNUMBER"));
-        res.put("orderDate", extractValue(exchange, body, "ORDERDATE"));
+        res.put("orderDate", new SimpleDateFormat("MM/dd/yyyy").parse(extractValue(exchange, body, "ORDERDATE")));
         res.put("status", extractValue(exchange, body, "STATUS"));
         res.put("customerName", extractValue(exchange, body, "CUSTOMERNAME"));
         res.put("dealSize", extractValue(exchange, body, "DEALSIZE"));
-        res.put("amount", extractValue(exchange, body, "SALES"));
+        res.put("amount", Double.parseDouble(extractValue(exchange, body, "SALES")));
 
         exchange.getIn().setBody(res);
       }

@@ -35,7 +35,7 @@ public class DataConsumer extends RouteBuilder {
             String query = "INSERT INTO sales(ORDERNUMBER,ORDERDATE,STATUS,CUSTOMERNAME,DEALSIZE,AMOUNT)" + 
                   "values('" + body.get("orderNumber") + "'" + ",'" + body.get("orderDate") + "'" +
                   ",'" + body.get("status") + "'" + ",'" + body.get("customerName") + "'" + 
-                  ",'" + body.get("dealSize") + "'" + ",'" + body.get("amount") + "')";
+                  ",'" + body.get("dealSize") + "'" + ",'" + String.valueOf(body.get("amount")) + "')";
             
             exchange.getIn().setBody(query);
          }
