@@ -1,0 +1,36 @@
+{
+  "name": "Sale",
+  "type": "record",
+  "namespace": "mx.com.redhat",
+  "fields": [
+    {
+      "name": "productline",
+      "type": "string"
+    },
+    {
+      "name": "amount",
+      "type": "float"
+    },
+    {
+      "name": "orderNumber",
+      "type": "string"
+    },
+    {
+      "name": "dealSize",
+      "type": "string"
+    },
+    {
+      "name": "orderDate",
+      "type": "int"
+      "logicalType": "date"
+    },
+    {
+      "name": "customerName",
+      "type": "string"
+    },
+    {
+      "name": "status",
+      "type": "string"
+    }
+  ]
+}
