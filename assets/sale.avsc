@@ -9,7 +9,7 @@
     },
     {
       "name": "amount",
-      "type": "float"
+      "type": "double"
     },
     {
       "name": "orderNumber",
@@ -21,8 +21,8 @@
     },
     {
       "name": "orderDate",
-      "type": "int"
-      "logicalType": "date"
+      "type": "string",
+      "logicalType": "ISO-8601-date"
     },
     {
       "name": "customerName",
